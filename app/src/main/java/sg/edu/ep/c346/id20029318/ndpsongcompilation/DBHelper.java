@@ -34,7 +34,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 + COLUMN_STARS + "INTEGER) ";
         db.execSQL(createSongTableSql);
     }
-}
+
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -43,10 +43,13 @@ public class DBHelper extends SQLiteOpenHelper {
         //onCreate(db); // Delete as table already created
 
     }
-    public long insertSong(String SongContent) {
+    public long insertSong(String SongTitle, String singers, int year , int stars) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_TITLE, title);
+        values.put(COLUMN_TITLE, SongTitle);
+        values.put(COLUMN_SINGERS, singers);
+        values.put(COLUMN_YEAR, year);
+        values.put(COLUMN_STARS,stars);
         long result = db.insert(TABLE_SONG, null, values);
         db.close();
         Log.d("SQL Insert","ID:"+ result); //id returned, shouldn’t be -1
@@ -54,31 +57,38 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public ArrayList<Song> getAllSongs() {
-        ArrayList<Song> song = new ArrayList<Song>();
+        ArrayList<Song> songList = new ArrayList<>();
 
         String selectQuery = "SELECT " + COLUMN_ID + ","
                 + COLUMN_TITLE + ", " + COLUMN_SINGERS + ","
                 + COLUMN_YEAR + "," + COLUMN_STARS + " FROM " + TABLE_SONG;
 
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
+        Cursor cursor;
+        cursor = db.rawQuery(selectQuery,null);
         if (cursor.moveToFirst()) {
             do {
                 int id = cursor.getInt(0);
                 String title = cursor.getString(1);
+                String singers = cursor.getString(2);
+                int year = cursor.getInt(3);
+                int stars = cursor.getInt(4);
                 Song songs = new Song(id, title, singers, year, stars);
-                song.add(songs);
+                songList.add(songs);
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
-        return song;
+        return songList;
     }
 
     public int updateSong(Song data){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_TITLE, data.getTitle());
+        values.put(COLUMN_SINGERS,data.getSingers());
+        values.put(COLUMN_YEAR,data.getYear());
+        values.put(COLUMN_STARS, data.getStars());
         String condition = COLUMN_ID + "= ?";
         String[] args = {String.valueOf(data.getId())};
         int result = db.update(TABLE_SONG, values, condition, args);
@@ -96,13 +106,13 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     //filter results
-    public ArrayList<Song> getAllSongs(String keyword) {
-        ArrayList<Song> song = new ArrayList<Song>();
+    public ArrayList<Song> getAllSongsByStars(int starFilter) {
+        ArrayList<Song> songList = new ArrayList<>();
 
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] columns= {COLUMN_ID, COLUMN_TITLE};
-        String condition = COLUMN_TITLE + " Like ?";
-        String[] args = { "%" +  keyword + "%"};
+        String[] columns= {COLUMN_ID, COLUMN_TITLE, COLUMN_SINGERS, COLUMN_YEAR, COLUMN_STARS};
+        String condition = COLUMN_STARS + " >= 5";
+        String[] args = { String.valueOf(starFilter)};
         Cursor cursor = db.query(TABLE_SONG, columns, condition, args,
                 null, null, null, null);
 
@@ -110,11 +120,15 @@ public class DBHelper extends SQLiteOpenHelper {
             do {
                 int id = cursor.getInt(0);
                 String title = cursor.getString(1);
+                String singers = cursor.getString(2);
+                int year = cursor.getInt(3);
+                int stars = cursor.getInt(4);
                 Song songs = new Song(id, title, singers, year, stars);
-                song.add(songs);
+                songList.add(songs);
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
-        return song;
-    }}
+        return songList;
+    }
+}

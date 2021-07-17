@@ -23,10 +23,15 @@ public class ShowSongs extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_songs);
 
+        setTitle(getTitle().toString() + "" + "Show Song");
+
         butFilter = findViewById(R.id.butFilter);
         lv = findViewById(R.id.lv);
 
-        al = new ArrayList<Song>();
+        DBHelper dbh =  new DBHelper(this);
+        al = dbh.getAllSongs();
+        dbh.close();
+
         aa = new ArrayAdapter<Song>(this,
                 android.R.layout.simple_list_item_1, al);
         lv.setAdapter(aa);
@@ -35,12 +40,18 @@ public class ShowSongs extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int
                     position, long identity) {
-                Song data = al.get(position);
                 Intent i = new Intent(ShowSongs.this,
                         ModifyActivity.class);
-                i.putExtra("data", data);
+                i.putExtra("song", al.get(position));
                 startActivity(i);
             }
+        });
+
+        butFilter.setOnClickListener((v) -> {
+            DBHelper dbHelp = new DBHelper(ShowSongs.this);
+            al.clear();
+            al.addAll(dbHelp.getAllSongsByStars(5));
+            aa.notifyDataSetChanged();
         });
     }
 }
